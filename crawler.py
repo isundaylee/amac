@@ -38,7 +38,7 @@ class Crawler:
                     else:
                         raise RuntimeError('Unknown category: ' + category)
             except Exception as e:
-                self.logger.exception("Exception: " + str(e))
+                self.logger.exception(e)
                 self.scheduler.pushURL(category, url)
 
     def process_index(self, url, doc):
@@ -75,21 +75,24 @@ class Crawler:
 
         results = []
 
-        for item in doc.find_all('div', class_='zg_itemWrapper'):
-            price_tags = item.select('.a-color-price')
-            rating_tags = item.select('.a-icon-star')
+        try:
+            for item in doc.find_all('div', class_='zg_itemWrapper'):
+                price_tags = item.select('.a-color-price')
+                rating_tags = item.select('.a-icon-star')
 
-            price_tag = None if len(price_tags) == 0 else price_tags[0]
-            rating_tag = None if len(rating_tags) == 0 else rating_tags[0]
+                price_tag = None if len(price_tags) == 0 else price_tags[0]
+                rating_tag = None if len(rating_tags) == 0 else rating_tags[0]
 
-            results.append({
-                'categories': categories,
-                'link': item.div.a['href'],
-                'title': item.div.a.div.img['alt'],
-                'image': item.div.a.div.img['src'],
-                'price': None if price_tag is None else price_tag.string,
-                'rating': None if rating_tag is None else rating_tag.span.string,
-            })
+                results.append({
+                    'categories': categories,
+                    'link': item.div.a['href'],
+                    'title': item.div.a.div.img['alt'],
+                    'image': item.div.a.div.img['src'],
+                    'price': None if price_tag is None else price_tag.string,
+                    'rating': None if rating_tag is None else rating_tag.span.string,
+                })
+        except Exception as e:
+            self.logger.exception(e)
 
         self.scheduler.commitResults(results)
 
