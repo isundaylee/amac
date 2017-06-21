@@ -33,6 +33,8 @@ class Crawler:
 
                     if category == 'index':
                         self.process_index(url, doc)
+                    elif category == 'leaf_index':
+                        self.process_leaf_index(url, doc)
                     elif category == 'index_page':
                         self.process_index_page(url, doc)
                     elif category == 'item':
@@ -48,12 +50,8 @@ class Crawler:
         assert(len(targets) == 1)
 
         list = targets[0].parent.parent.ul
-        if list is None:
-            self.process_leaf_index(url, doc)
-            return
-
         for li in list.find_all('li'):
-            self.scheduler.pushURL('index', li.a['href'])
+            self.scheduler.pushURL('leaf_index', li.a['href'])
 
     def process_leaf_index(self, url, doc):
         paginations = doc.select('.zg_pagination')
@@ -65,20 +63,10 @@ class Crawler:
                 self.scheduler.pushURL('index_page', page.a['href'])
 
     def process_index_page(self, url, doc):
-        selected = doc.select('span.zg_selected')[0]
-        up = selected.parent.parent.parent
-        categories = [up.li.a.string, selected.string]
-        while True:
-            up = up.parent
-            browse_up = up.select('> .zg_browseUp')
-            if len(browse_up) == 0:
-                break
-            categories = [browse_up[0].a.string] + categories
-
         results = []
 
-        try:
-            for item in doc.find_all('div', class_='zg_itemWrapper'):
+        for item in doc.find_all('div', class_='zg_itemWrapper'):
+            try:
                 price_tags = item.select('.a-color-price')
                 rating_tags = item.select('.a-icon-star')
 
@@ -86,15 +74,15 @@ class Crawler:
                 rating_tag = None if len(rating_tags) == 0 else rating_tags[0]
 
                 results.append({
-                    'categories': categories,
+                    'category': doc.select('.category')[0].string,
                     'link': item.div.a['href'],
                     'title': item.div.a.div.img['alt'],
                     'image': item.div.a.div.img['src'],
                     'price': None if price_tag is None else price_tag.string,
                     'rating': None if rating_tag is None else rating_tag.span.string,
                 })
-        except Exception as e:
-            self.logger.exception(e)
+            except Exception as e:
+                self.logger.exception(e)
 
         self.scheduler.commitResults(results)
 
