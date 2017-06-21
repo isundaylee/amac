@@ -1,6 +1,7 @@
 import time
 import urllib.request
 
+from threading import Thread
 from bs4 import BeautifulSoup
 
 from redis_scheduler import RedisScheduler
@@ -99,6 +100,17 @@ class Crawler:
 
 
 if __name__ == '__main__':
-    Crawler(RedisScheduler([
-        ('index', ROOT_URL)
-    ], 'localhost', 6379, 0), 'LOCAL').start()
+    def worker(index):
+        Crawler(RedisScheduler([
+            ('index', ROOT_URL)
+        ], 'localhost', 6379, 0), 'WORKER ' + str(index)).start()
+
+    threads = []
+
+    for i in range(4):
+        thread = Thread(target=worker, args=(i,))
+        thread.start()
+        threads.append(thread)
+
+    for i in range(len(threads)):
+        threads[i].join()
