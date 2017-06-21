@@ -40,7 +40,6 @@ class Crawler:
             except Exception as e:
                 self.logger.exception("Exception: " + str(e))
                 self.scheduler.pushURL(category, url)
-                raise e
 
     def process_index(self, url, doc):
         targets = doc.select('span.zg_selected')
