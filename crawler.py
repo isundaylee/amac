@@ -3,7 +3,7 @@ import urllib.request
 
 from bs4 import BeautifulSoup
 
-from local_scheduler import LocalScheduler
+from redis_scheduler import RedisScheduler
 from logger import Logger
 
 ROOT_URL = 'https://www.amazon.com/Best-Sellers/zgbs'
@@ -16,12 +16,13 @@ class Crawler:
 
     def start(self):
         while True:
-            category, url = self.scheduler.popURL()
-
-            if url is None:
+            raw_url = self.scheduler.popURL()
+            if raw_url is None:
                 self.logger.log("No URL left to crawl. ")
                 time.sleep(1)
                 continue
+
+            category, url = raw_url
 
             try:
                 with urllib.request.urlopen(url) as response:
@@ -98,6 +99,6 @@ class Crawler:
 
 
 if __name__ == '__main__':
-    Crawler(LocalScheduler([
+    Crawler(RedisScheduler([
         ('index', ROOT_URL)
-    ], 'output.json'), 'LOCAL').start()
+    ], 'localhost', 6379, 0), 'LOCAL').start()
