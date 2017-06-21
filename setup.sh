@@ -8,6 +8,3 @@ systemctl enable redis-server.service
 pip3 install beautifulsoup4
 pip3 install ujson
 pip3 install redis
-
-[ -d amac ] || git clone https://github.com/isundaylee/amac
-cd amac; git pull origin master; cd ..
